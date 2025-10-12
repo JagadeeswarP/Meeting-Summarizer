@@ -1,0 +1,12 @@
+# render.yaml
+services:
+  - type: web
+    name: modern-meeting-summarizer
+    env: python
+    region: singapore       # Closest region to India
+    plan: free              # Free or paid plan
+    buildCommand: apt-get update && apt-get install -y ffmpeg && pip install -r requirements.txt
+    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+    envVars:
+      - key: GOOGLE_API_KEY
+        fromSecret: GOOGLE_API_KEY  # Add your Gemini API key as a secret in Render
