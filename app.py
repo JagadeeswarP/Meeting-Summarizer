@@ -6,17 +6,23 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 
 
+if 'rerun' not in st.session_state:
+    st.session_state['rerun'] = False
+
+
 load_dotenv()
 GEMINI_API_KEY = os.getenv("GOOGLE_API_KEY")
 
 if not GEMINI_API_KEY:
     st.error("Gemini API key not found. Set GOOGLE_API_KEY in your .env.")
     st.stop()
+
 try:
     genai.configure(api_key=GEMINI_API_KEY)
 except Exception as e:
     st.error(f"Error configuring Gemini: {e}")
     st.stop()
+
 
 @st.cache_resource
 def load_whisper_model():
@@ -63,7 +69,9 @@ def summarize_transcript(transcript):
         st.error(f"Error during summarization: {e}")
         return "Error: Could not generate summary."
 
+
 st.set_page_config(page_title="Modern Meeting Summarizer", layout="wide", page_icon="🎙️")
+
 st.markdown(
     """
     <h1 style='text-align: center; color: #4B8BBE;'>🎙️ Modern Meeting Summarizer</h1>
@@ -72,9 +80,21 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+
+if st.button("🗑️ Clear All"):
+    for key in ['transcript', 'summary', 'uploaded_file']:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.session_state['rerun'] = not st.session_state['rerun']
+
+
 with st.container():
     st.markdown("### 📂 Upload Audio File")
-    uploaded_file = st.file_uploader("Supported formats: MP3, WAV, M4A, FLAC", type=['mp3', 'wav', 'm4a', 'flac'])
+    uploaded_file = st.file_uploader(
+        "Supported formats: MP3, WAV, M4A, FLAC", 
+        type=['mp3', 'wav', 'm4a', 'flac'], 
+        key="uploaded_file"
+    )
     
     if uploaded_file:
         st.audio(uploaded_file, format='audio/mpeg')
@@ -91,7 +111,6 @@ with st.container():
             
             os.remove(audio_path)
 
-
             if transcript:
                 st.session_state['transcript'] = transcript
             if summary:
@@ -100,8 +119,6 @@ with st.container():
 
 if 'transcript' in st.session_state and 'summary' in st.session_state:
     st.markdown("### 💡 Summary & Action Items")
-    
-
     st.markdown(
         f"<div style='font-size: 21px; font-weight: 500;'>{st.session_state['summary']}</div>", 
         unsafe_allow_html=True
@@ -116,17 +133,17 @@ if 'transcript' in st.session_state and 'summary' in st.session_state:
     st.markdown("---")
 
     st.markdown("### 📝 Full Transcript")
-    
-    st.markdown("""
+    st.markdown(
+        """
         <style>
-        /* Target the textarea widget specifically by its generated class if possible, 
-           or globally for textareas for simplicity */
         .stTextArea textarea {
             font-size: 21px !important; 
-            font-weight: 350 !important; /* Standard weight for readability in a large block of text */
+            font-weight: 350 !important;
         }
         </style>
-    """, unsafe_allow_html=True)
+        """,
+        unsafe_allow_html=True
+    )
     
     st.text_area("Transcript", st.session_state['transcript'], height=500)
     
@@ -136,7 +153,7 @@ if 'transcript' in st.session_state and 'summary' in st.session_state:
         file_name="meeting_transcript.txt"
     )
 
-# --- Sidebar ---
+
 st.sidebar.header("About")
 st.sidebar.info(
     """
