@@ -10,5 +10,5 @@ openai-whisper
 google-generativeai
 python-dotenv
 numpy
-ffmpeg
+ffmpeg-python
 
